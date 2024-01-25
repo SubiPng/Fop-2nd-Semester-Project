@@ -1,0 +1,380 @@
+------------------------- AtmAccount.java
+
+Start
+
+    Declare boolean loop as true
+
+    While loop is true
+        Display "Account (Type either 1, 2 or exit.)"
+        Display "1. Log-in"
+        Display "2. Register"
+
+        Declare string accMode
+        input accMode
+
+        If accMode is equal to "exit"
+            Set loop to false
+        End If
+
+        If accMode is equal to "1"
+            Call AtmMain.main(args)
+            Set loop to false
+        End If
+
+        If accMode is equal to "2"
+            Call AtmRegistration.main(args)
+        End If
+
+        else
+            Display "Invalid input. Please type either 1 or 2."
+        End else
+    End While
+
+End
+
+------------------------- AtmRegistration.java
+
+Start AtmRegistration
+    Declare boolean passwordCreation as true
+    Declare boolean passLength as false
+
+    Display "Account Registration (type 'exit' to exit)"
+
+    Display "Username:"
+    Declare string username
+    input username
+    Trim username
+
+    If username equals "exit"
+        Set passLength to true
+        Set passwordCreation to false
+    End If
+
+    While passwordCreation is true
+        While passLength is false
+            Display "Enter a password:"
+            decalre tempPassword
+            input tempPassword
+
+            If tempPassword is not equal to "exit"
+                If length of tempPassword is greater than or equal to 6
+                    Set passLength to true
+                    Call reEnterPass(passwordCreation, keyboard, username, tempPassword)
+                    Set passwordCreation to false
+                End If
+
+                Else
+                    Display "Your password must contain at least 8 characters"
+                End Else
+            End If
+
+            Else
+                Set passLength to true
+                Set passwordCreation to false
+            End Else
+        End While
+    End While
+End AtmRegistration
+
+Module reEnterPass (loop, keyboard, username, temp)
+    Declare String password
+    Declare boolean reEnterLoop as true
+
+    While reEnterLoop is true
+        Display "Re-enter the password:"
+        Declare String tempInput
+        input tempInput
+
+        If tempInput equals "exit"
+            Set reEnterLoop to false
+        End If
+
+        Else
+            If tempInput equals temp
+                Set password to temp
+                Set loop to false
+                Set reEnterLoop to false
+                Call createAccount(username, password, 0)
+            End If
+
+            Else
+                Display "The password does not match! Try again"
+            End Else
+        End Else
+    End While
+End Module
+
+Module createAccount with parameters (username, password, balance)
+    Declare fileName as username + ".txt"
+
+    Try
+        Create FileWriter myWriter for fileName
+        Write username, password, and balance to myWriter
+        Close myWriter
+        Display "Successfully created an account!"
+    End Try
+
+    Catch IOException error
+        Display "An error occurred."
+        Print error stack trace
+    End Catch
+End Module createAccount
+
+------------------------- AtmMain.java
+
+Start AtmMain
+    Display "Account Log-in (type 'exit' to exit)"
+
+    Declare loop as true
+    Declare string username 
+    Declare string password
+    Declare string balance
+    Declare float balance 
+
+    While loop is true
+        Display "Username:"
+        Declare String usernameAttempt
+        input usernameAttempt
+
+        If usernameAttempt equals "exit"
+            Set loop to false
+        End If
+
+        Else
+            Try
+                Declare getAccount as File with usernameAttempt + ".txt"
+                Declare myReader as Scanner for getAccount
+
+                Declare string username 
+                input username from myReader
+
+                Declare string password
+                input password from myReader
+
+                Declare float balance 
+                input float from myReader
+
+                Close myReader
+
+                Declare int passwordAttempt as 1
+                Declare boolean passwordValidity as true
+
+                While passwordValidity is true
+                    Display "Please enter your password (Attempt: passwordAttempt):"
+                    decalre String passwordInput 
+                    input passwordInput
+
+                    If passwordInput equals password
+                        Display "Welcome back, username!"
+                        Call Menu(keyboard, balance, username, password)
+                        Set passwordValidity to false
+                        Set loop to false
+                        Break the loop
+                    End If
+
+                    Else If passwordAttempt equals 3
+                        Display "Process cancelled"
+                        Set passwordValidity to false
+                        Set loop to false
+                        Break the loop
+                    End Else If
+
+                    Else
+                        Increment passwordAttempt by 1
+                        Display "Incorrect, Try again"
+                    End Else
+                End While
+            End Try
+
+            Catch FileNotFoundException e
+                Display "Account does not exist"
+            End Catch
+        End Else
+
+    End While
+
+End AtmMain
+
+    Module Menu with parameters (keyboard, balance, username, password)
+        Declare float withdraw 
+        Declare boolean loop as true
+
+        While loop is true
+            Display "Menu (type either 1, 2, 3, 4) \n1. Check Balance \n2. Wtihdraw \n3. Deposit \n4. Transfer"
+            Declare String menuInput
+            input menuInput
+
+            Switch menuInput
+                Case "1": // CHECK BALANCE
+                    Display "Balance: RM" + balance
+                    Set loop to false
+                End case "1"
+
+                Case "2": // WITHDRAW
+                    Display "How much do you want to withdraw?"
+                    Declare float withdraw
+                    input withdraw
+                    balance = balance - withdraw
+                    Call deleteAccount(username)
+                    Call createAccount(username, password, balance, false)
+                    Call receiptGenerator(balance, withdraw)
+                    Set loop to false
+                End case "2"
+
+                Case "3": // DEPOSIT
+                    Display "How much do you want to deposit into your account?"
+                    Declare float deposit
+                    input deposit
+                    Add deposit to balance
+                    Call deleteAccount(username)
+                    Call createAccount(username, password, balance, false)
+                    Set loop to false
+                End case "3"
+
+                Case "4": // TRANSFER TO ANOTHER ACCOUNT
+                    Declare boolean valid as false
+
+                    While valid is false
+                        Declare  boolean transferLoop as true
+
+                        While transferLoop is true
+                            Display "Who do you want to transfer it to? Username:"
+                            Declare string transferReceiver
+                            input transferReceiver
+
+                            Call accountChecker(loop, transferReceiver, valid, false)
+
+                            If accountChecker returns true
+                                Display "How much do you want to transfer?"
+                                Declare float transferAmount
+                                input transferAmount
+                            End if
+
+                                If transferAmount is greater than balance
+                                    Call receiptGenerator(balance, transferAmount)
+                                    Set valid to true
+                                    Set loop to false
+                                    Break the loop
+                                End if
+
+                                Else
+                                    Try
+                                        Declare String usernameTransfer
+                                        Declare String passwordTransfer
+                                        Declare balanceTransfer as float
+
+                                        Declare getAccount as File with transferReceiver + ".txt"
+                                        Declare myReader as Scanner for getAccount
+
+                                        Declare string usernameTransfer from myReader
+                                        Declare string passwordTransfer from myReader
+                                        Declare float balanceTransfer from myReader
+
+                                        Close myReader
+
+                                        add balanceTransfer with transferAmount as the new balanceTransfer
+                                        Call deleteAccount(usernameTransfer)
+                                        Call createAccount(usernameTransfer, passwordTransfer, balanceTransfer, false)
+
+                                        subtract balance with transferAmount to get the new balance
+
+                                        deleteAccount(username);
+                                        createAccount(username, password, balance, false);
+
+                                        Call receiptGenerator(balance, transferAmount)
+                                        Set valid to true
+                                        Set loop to false
+                                        Return
+                                    End Try
+
+                                    Catch Exception e
+                                        Handle exception
+                                    End Catch
+
+                            Else
+                                Display "Not valid"
+                            End If
+
+                            Set valid to true
+                            Set loop to false
+                        End while 
+                    End While
+                End case "4"
+
+                Default :
+                    if loop == true 
+                        Display "Invalid input. Please type either 1, 2, 3 or 4. \n"
+                End Default
+                
+            End Switch
+
+        If loop is true
+            Display "Invalid input. Please type either 1, 2, 3, or 4."
+        End if 
+        
+    End Module Menu
+
+    Module receiptGenerator with parameters (balance, withdraw)
+        Display "Transaction Receipt"
+        Display "Date and Time: "
+        Create now as Date object
+        Display now
+        
+        If withdraw is greater than balance
+            Display "Error 101. Insufficient balance"
+            Display "Thank you for using our service!"
+        End If
+
+        Else
+            Display "Remaining balance = RM" + balance
+            Display "Thank you for using our service!"
+        End Else
+    End Module receiptGenerator
+
+    Module accountChecker with parameters (loop, usernameAttempt, accountValidity, errorboolean)
+        Try
+            Declare getAccount as File with usernameAttempt + ".txt"
+            Declare myReader as Scanner for getAccount
+            Close myReader
+            Set loop to false
+            Return accountValidity as true
+        End Try
+
+        Catch FileNotFoundException error
+            If errorboolean equals true
+                Display "Account doesn't exist. Try again"
+            End If
+        End Catch
+        Return loop
+
+    End Module accountChecker
+
+    Module deleteAccount with parameter (username)
+        Declare fileName as username + ".txt"
+        Declare delFile as File with fileName
+        Delete delFile
+    End Module deleteAccount
+        
+    Module createAccount with parameters (username, password, balance, create)
+        Declare string fileName as username + ".txt"
+        
+        Try
+            Create myWriter as FileWriter for fileName
+            Write username, password, and balance to myWriter // File Content // 0 = default new account balance
+            Close myWriter
+        
+            If create equals true
+                Display "Successfully created an account!"
+            End If
+        End Try
+
+        Catch IOException error
+            Display "An error occurred."
+            Print error stack trace
+        End Catch
+
+    End Module createAccount
+        
+End AtmMain
+
+
